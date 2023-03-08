@@ -47,9 +47,48 @@ msu_data <- read_csv("C:/Users/valen/Downloads/msudata.csv")
 View(msu_data)
 ```
 
+#MERGING ALL DATA FILES###################
 ```{r}
-msu_data <- read_csv("C:/Users/valen/Downloads/msudata.csv")
-View(msu_data)
+library(readr)
+#msudata1 <- read_csv("C:/Users/valen/Downloads/msudata (1).csv")
+#View(msudata_1_)
 ```
 
+```{r}
+#msudata2 <- read_csv("C:/Users/valen/Downloads/msudata2.csv")
+#View(msudata2)
+```
 
+```{r}
+#msudata3 <- read_csv("C:/Users/valen/Downloads/msudata3.csv")
+#View(msudata3)
+```
+
+```{r}
+#msudata4 <- read_csv("C:/Users/valen/Downloads/msudata4.csv")
+#View(msudata4)
+```
+
+```{r}
+#msudata5 <- read_csv("C:/Users/valen/Downloads/msudata5.csv")
+#View(msudata5)
+```
+
+```{r}
+#msudata6 <- read_csv("C:/Users/valen/Downloads/msudata6.csv")
+#View(msudata6)
+```
+
+#CREATING CSV FOR MERGED DATA################# 
+```{r}
+#full_data<- rbind(msudata1,msudata2,msudata3,msudata4,msudata5,msudata6)
+#View(full_data)
+#write.csv(full_data, "C:\\Users\\valen\\Downloads\\msufulldata.csv", #row.names=FALSE)
+```
+
+#ACCESS THE FULL DATA 
+```{r}
+#where you will bring in the data
+msufulldata <- read_csv("C:/Users/valen/Downloads/msufulldata.csv")
+View(msufulldata)
+```
