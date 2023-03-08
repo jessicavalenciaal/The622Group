@@ -47,3 +47,9 @@ msu_data <- read_csv("C:/Users/valen/Downloads/msudata.csv")
 View(msu_data)
 ```
 
+```{r}
+msu_data <- read_csv("C:/Users/valen/Downloads/msudata.csv")
+View(msu_data)
+```
+
+
