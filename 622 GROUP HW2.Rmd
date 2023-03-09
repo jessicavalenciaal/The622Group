@@ -2,7 +2,9 @@
 title: "622 HW2 GROUP"
 author: "Jessica Valencia"
 date: "2023-03-04"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -43,8 +45,8 @@ library(RedditExtractoR)
 ```{r}
 #where you will bring in the data
 library(readr)
-msu_data <- read_csv("C:/Users/valen/Downloads/msudata.csv")
-View(msu_data)
+#msu_data <- read_csv("C:/Users/valen/Downloads/msudata.csv")
+#View(msu_data)
 ```
 
 #MERGING ALL DATA FILES###################
@@ -88,7 +90,10 @@ library(readr)
 
 #ACCESS THE FULL DATA 
 ```{r}
+library(readr)
 #where you will bring in the data
-msufulldata <- read_csv("C:/Users/valen/Downloads/msufulldata.csv")
+msufulldata <- read.csv('https://raw.githubusercontent.com/jessicavalenciaal/The622Group/main/msufulldata.csv',sep=',')
 View(msufulldata)
+head(msufulldata)
 ```
+
