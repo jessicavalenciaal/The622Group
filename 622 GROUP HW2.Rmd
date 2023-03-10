@@ -99,7 +99,7 @@ head(msufulldata)
 
 The timestamp variable is given as a UNIX timestamp, the number of seconds from 1/1/70. We first convert this variable into a date and time. (Reference: Assignment RMarkdown, Canvas)
 
-```{r datetime}
+```{r datetime, message=FALSE}
 library(lubridate)
 msufulldata$datetime = as_datetime(msufulldata$timestamp)
 head(msufulldata[,c('date_utc', 'datetime')])
@@ -179,7 +179,105 @@ plot(frequent_terms)
 
 Without stop words, additional themes begin to emerge such as "gun" and "game".  These two words indicate that there may be multiple popular topics about Michigan State University being discussed concurrently on Reddit.  There remain words that may be non-informative, such as www, govmailto, b, x, etc.  However, these together may indicate a trend in the posts urging readers to reach out to government representatives - which is an important aspect of the ongoing trend during the listening period.
 
+### Exploratory Analysis
+
+Before doing formal statistical analyses on the scraped and subsetted data, we may like to know more about where it came from specifically within the Reddit site.
+
+For instance, we can review the subreddits that contain the posts of interest.
+
+```{r, message=FALSE}
+subredditfreq<-table(subset_msu$subreddit)
+library(dplyr)
+
+subfreqordered <- subredditfreq %>% as.data.frame() %>% arrange(desc(Freq))
+subfreqordered[1:10,]
+```
+
+The top 10 subreddits that contained posts within our corpus as shown above (including "masskillers", "gunpolitics", and "GunsAreCool") support the prevalence of the MSU shooting within the scraped data.
+
+We can also review when the posts within our corpus were added to Reddit.
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+ggplot(subset_msu, aes(x=datetime)) +
+  geom_histogram() +
+  xlab('Date') + ylab('Count') + ggtitle('Frequency of MSU Shooting Posts within the last month')
+```
+The shooting at Michigan State University occurred on Monday, February 13.  The plot of posts shows the highest frequency of selected posts beginning that day and within the 3 days that followed.
+
+Reddit allows for users to comment on posts, which may provide insights into the overall engagement with posts related to the MSU Shooting.  
+
+```{r}
+comsum<-summary(subset_msu$comments)
+comsum
+```
+The median number of comments on the posts within the corpus is `r comsum[3]` which is relatively small, but there is a wide spread of engagement across different posts ranging from `r comsum[1]` to `r comsum[6]`.
+
+### Sentiment Analysis
+
+Sentiment analysis allows us to review the overall positive or negative tone of posts within our corpus using 5 different dictionaries:
+
+* GI: Harvard-IV General Inquirer dictionary
+* HE: Henry's finance specific dictionary
+* LM: Loughran-McDonald financial dictionary
+* QDAP
+* Lexicoder
+
+```{r, message=FALSE}
+library(SentimentAnalysis)
+
+#DictionaryGI$positive[1:100]
+#DictionaryGI$negative[1:100]
+
+library(quanteda)
+
+#data_dictionary_LSD2015$negative[1:50]
+#data_dictionary_LSD2015$positive[1:50]
+#data_dictionary_LSD2015$neg_positive[1:50]
+#data_dictionary_LSD2015$neg_negative[1:50]
+
+sentiments = analyzeSentiment(iconv(as.character(subset_msu$title_text), to='UTF-8'))
+head(sentiments)
+```
+
+
+```{r}
+tokenized = tokens_lookup(tokens(subset_msu$title_text), dictionary = data_dictionary_LSD2015, exclusive=FALSE)
+sentiments$LCpos = sapply(tokenized, function(x)sum(x=='POSITIVE')-sum(x=='NEG_POSITIVE') + sum(x =='NEG_NEGATIVE'))
+sentiments$LCneg = sapply(tokenized, function(x)sum(x=='NEGATIVE')-sum(x=='NEG_NEGATIVE') + sum(x=='NEG_POSITIVE'))
+sentiments$LC = (sentiments$LCpos - sentiments$LCneg)/sentiments$WordCount
+```
 
 
 
+```{r, cache=TRUE}
+library(vader)
 
+vader_scores = vader_df(subset_msu$title_text)
+sentiments$Vader = vader_scores$compound
+
+library(GGally)
+
+with(sentiments, 
+     ggpairs(data.frame(SentimentGI, SentimentHE, SentimentLM, SentimentQDAP, LC, Vader)))
+```
+
+
+```{r}
+all_subset_msu_data = cbind(subset_msu, sentiments)
+ggplot(all_subset_msu_data, aes(x=as.Date(date_utc), y=Vader)) +
+  geom_point() + geom_smooth()
+```
+
+
+Difference in sentiment between MSU subreddit and GunsAreCool subreddit
+```{r}
+table(all_subset_msu_data$subreddit)
+
+par(mfrow=c(1,2))
+hist(all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='msu'], main='msu', xlab='Vader')
+hist(all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='GunsAreCool'], main='GunsAreCool', xlab='Vader')
+
+t.test(all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='msu'],
+       all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='GunsAreCool'])
+```
