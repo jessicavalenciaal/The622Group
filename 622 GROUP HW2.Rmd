@@ -91,7 +91,7 @@ library(readr)
 msufulldata <- read.csv('https://raw.githubusercontent.com/jessicavalenciaal/The622Group/main/msufulldata.csv',sep=',')
 originaldim<-dim(msufulldata)
 originaldim
-View(msufulldata)
+#View(msufulldata)
 head(msufulldata)
 ```
 
@@ -117,15 +117,69 @@ We begin with limiting to any posts that contain the phrases "Michigan State Uni
 
 ```{r}
 patterns = 'Michigan State University|MSU|MSU Shooting|Michigan State|Spartan'
-subset_msu_posts = msufulldata[grepl(patterns, msufulldata$title, ignore.case=TRUE) |
+subset_msu = msufulldata[grepl(patterns, msufulldata$title, ignore.case=TRUE) |
                                          grepl(patterns, msufulldata$text, ignore.case=TRUE),]
-subsetdim<-dim(subset_msu_posts)
+subsetdim<-dim(subset_msu)
 subsetdim
-head(subset_msu_posts)
-View(subset_msu_posts)
+head(subset_msu)
+#View(subset_msu)
 ```
 
 Using this criteria to subset the scraped Reddit corpus reduces our observations from `r originaldim[1]` to `r subsetdim[1]`.
+
+Given the notable reduction in the sample (reduced by approximately half) a quick manual review was conducted to ensure there were not commonly used phases that should be added to the inclusion criteria.  No additional phrases were identified that would notably improve coverage of the topic in the corpus.
+
+### Frequent Terms
+
+To continue the exploratory analysis of the dataset, we used the qdap package to identify the most frequently used phrases in our updated (subsetted) corpus.
+
+```{r, warning=FALSE, message=FALSE}
+# Workaround needed to prevent RStudio from crashing
+replacement <- function(category = "LC_ALL") {
+  
+  if (identical(category, "LC_MESSAGES"))
+    return("")
+  
+  category <- match(category, .LC.categories)
+  if (is.na(category)) 
+    stop("invalid 'category' argument")
+  .Internal(Sys.getlocale(category))
+  
+}
+
+base <- asNamespace("base")
+environment(replacement) <- base
+unlockBinding("Sys.getlocale", base)
+assign("Sys.getlocale", replacement, envir = base)
+lockBinding("Sys.getlocale", base)
+
+library(rJava)
+rJava::.jinit()
+
+# Load qdap package
+library(qdap)
+
+# concatenate post title and text
+subset_msu$title_text = paste(subset_msu$title, subset_msu$text)
+frequent_terms = freq_terms(subset_msu$title_text, 30)
+plot(frequent_terms)
+```
+
+As shown in the plot above, many of the frequent words are "stop words" that are not relevant to understanding the content of the post.  We do, however, see the expected and very relevant words "shooting" and "msu".
+
+To make the review of frequent words more meaningful, we filter out the stop words and re-compute the most frequently used words in the corpus.
+
+```{r}
+msustopwords = subset_msu$title_text %>% iconv ("latin1", "ASCII", sub ="") %>% scrubber () %sw%
+qdapDictionaries :: Top200Words
+
+frequent_terms = freq_terms(msustopwords, 30)
+plot(frequent_terms)
+```
+
+Without stop words, additional themes begin to emerge such as "gun" and "game".  These two words indicate that there may be multiple popular topics about Michigan State University being discussed concurrently on Reddit.  There remain words that may be non-informative, such as www, govmailto, b, x, etc.  However, these together may indicate a trend in the posts urging readers to reach out to government representatives - which is an important aspect of the ongoing trend during the listening period.
+
+
 
 
 
