@@ -281,3 +281,65 @@ hist(all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='GunsAreCool'], ma
 t.test(all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='msu'],
        all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='GunsAreCool'])
 ```
+
+
+### 3 Additional Questions about the Corpus
+
+1) Does post length correlate with vader sentiment scores?
+```{r}
+cor(sentiments$WordCount,sentiments$Vader)
+```
+
+
+2) Does the sentiment of a post correlate with the number of comments it will receive?  Does the intensity (regardless if positive or negative sentiment) correlate with the number of comments a post will receive?
+```{r, echo=FALSE}
+#head(all_subset_msu_data)
+```
+
+```{r}
+#correlation between vader score and number of comments
+cor(all_subset_msu_data$Vader,all_subset_msu_data$comments)
+
+#create new variable which is absolute value of vader score to indicate the intensity of the vader score regardless if positive or negative - will use to see whether the more positive or negative a post is will correlate with number of comments
+all_subset_msu_data$VaderIntesity<-abs(all_subset_msu_data$Vader)
+#head(all_subset_msu_data)
+
+#correlation between vader score intensity and number of comments
+cor(all_subset_msu_data$VaderIntesity,all_subset_msu_data$comments)
+
+```
+
+3) Is there a difference between the number of comments on positive or negative sentiment thread (as a proxy for engagement)?
+
+```{r}
+library(sjmisc)
+
+#create new variable which is dichomotized to positive vader score and negative vader 
+all_subset_msu_data$Vaderposneg<-dicho(all_subset_msu_data$Vader,dich.by=0)
+#head(all_subset_msu_data)
+
+par(mfrow=c(1,2))
+hist(all_subset_msu_data$comments[all_subset_msu_data$Vaderposneg=='0'], main='Negative Sentiment', xlab='Number of Comments')
+hist(all_subset_msu_data$comments[all_subset_msu_data$Vaderposneg=='1'], main='Positive Sentiment', xlab='Number of Comments')
+
+t.test(all_subset_msu_data$comments[all_subset_msu_data$Vaderposneg=='0'],
+       all_subset_msu_data$comments[all_subset_msu_data$Vaderposneg=='1'])
+
+```
+
+```{r}
+
+# Considering only observations that had at least 100 comment
+
+subset_msu_withcomments<- all_subset_msu_data[which(all_subset_msu_data$comments > 100), ]
+
+dim(subset_msu_withcomments)
+head(subset_msu_withcomments)
+
+par(mfrow=c(1,2))
+hist(subset_msu_withcomments$comments[subset_msu_withcomments$Vaderposneg=='0'], main='Negative Sentiment', xlab='Number of Comments')
+hist(subset_msu_withcomments$comments[subset_msu_withcomments$Vaderposneg=='1'], main='Positive Sentiment', xlab='Number of Comments')
+
+t.test(subset_msu_withcomments$comments[subset_msu_withcomments$Vaderposneg=='0'],
+      subset_msu_withcomments$comments[subset_msu_withcomments$Vaderposneg=='1'])
+```
