@@ -21,6 +21,11 @@ For this assignment, the Reddit API was used to scrape information about Michiga
 library(RedditExtractoR)
 ```
 
+### Introduction
+
+For this assignment we decided to look at Michigan State University(MSU) as our topic of interest on Reddit. We found that the MSU shooting was a significant event that was a common topic of discussion and we wanted to see the prevalence of this event on Reddit compared to other events regarding Michigan State University. We decided to scrape data using various different variations of Michigan State University. After scraping day by day for several days, our raw data totaled to 1224 posts. We then cleaned the data which resulted in a data frame of 624 posts and then conducted exploratory analysis on this data. After exploring the data and familiarizing ourselves with the data we decided to look at it more closely through a sentiment analysis using 5 dictionary based methods: Harvard-IV General Inquirer dictionary, Henry’s finance specific dictionary, Loughran-McDonald financial dictionary, QDAP, Lexicoderand, and one-rule based method. 
+
+
 ### Scraping Posts
 
 We used the built-in find_thread_urls feature with the keyword "MSU shooting" to locate the URLs to Reddit threads of interest (in other words, threads that contained the string "MSU shooting"). Data was colled from the "front page" of Reddit, rather than any specific subreddit in this first step.
@@ -32,6 +37,9 @@ We used the built-in find_thread_urls feature with the keyword "MSU shooting" to
 ```
 
 The URLs were then used to extract the content of the threads/posts as well as metadata describing each thread.  This process was repeated over several days to "listen" to the corpus of posts about Michigan State University over time.
+
+When deciding on how we wanted to go about scrapping the data, we found that collecting over multiple days was the best method considering there is a cap to how much data you are able to scrape per day. We scraped data over the course of 6 days, March 3rd to March 8th. Data was initially scraped with period being set as ‘day’, meaning the data being scraped was data from that day. However, we found that a sufficient amount of data was not being scraped through this method on the first day of scraping. The first scrape done using ‘day’ as the period scraped under 100 posts. Therefore, we decided to do a scrape using ‘month’ as the period in the beginning of scraping, that way we scraped data over the past month as well. However, we still scraped by day moving forward. We also used multiple different variations of Michigan State University in order to make sure we had a sufficient amount of relevant data. The words used to search the proper data were “MSU”, “msu”,”Michigan State University”, “michigan shooting”, “msu shooting”, and “MSU shooting”. 
+
 
 ```{r get_thread_content}
 #msu_content = get_thread_content(msu_urls$url[1:25])
@@ -50,11 +58,9 @@ The URLs were then used to extract the content of the threads/posts as well as m
 #write.csv(msu_urls, "C:\\Users\\valen\\Downloads\\msudata.csv", row.names=FALSE)
 ```
 
-### Merging Data
+### Merging Data and Accessing the Full Dataset
 
 Each day a csv was collected and at the end of the data collection window (6 days) the information was merged to a single dataset.  
-
-**From the assignment description: The report each group is asked to turn in for this assignment should specify how the keywords and/or subreddits used for collecting the posts were selected. The keywords and/or subreddits should be listed, along with the dates when listening occurred. If keywords and/or subreddits were changed during the data collection process, please note the changes that were made, the reason(s) for them and when they occurred. Listening ideally will occur continuously, but if there are gaps, the time(s) of these gaps should be noted. **
 
 ```{r}
 library(readr)
@@ -81,8 +87,6 @@ library(readr)
 #write.csv(full_data, "C:\\Users\\valen\\Downloads\\msufulldata.csv", #row.names=FALSE)
 ```
 
-### Accessing the Full Dataset
-
 The full corpus of Reddit threads scraped and the code for this analysis was loaded to a shared github repository, which each member of the analysis team (JV, SK, RK, SM) collaborative updated and analyzed.
 
 ```{r}
@@ -97,7 +101,8 @@ head(msufulldata)
 
 ### Cleaning the Dataset
 
-The timestamp variable is given as a UNIX timestamp, the number of seconds from 1/1/70. We first convert this variable into a date and time. (Reference: Assignment RMarkdown, Canvas)
+The first step in conducting a reliable analysis is ensuring that the data is sufficiently cleaned to avoid construct-irrelevant effects.  The data cleaning step includes both data formatting processes and removal of irrelevant data.
+First, we notice that the timestamp variable is given as a UNIX timestamp, the number of seconds from 1/1/70.  We convert this variable into a date and time to enable analyses of when the posts occurred. (Reference: Assignment RMarkdown, Canvas)
 
 ```{r datetime, message=FALSE}
 library(lubridate)
@@ -107,13 +112,11 @@ head(msufulldata[,c('date_utc', 'datetime')])
 
 Further we need to verify that information collected truly relate to the topic of interest - Michigan State University. A sample of 15 comments were used for preliminary exploratory analysis of the corpus to verify that the collected data are generally aligned with the specified topic.
 
-```{r}
+```{r, results=FALSE}
 #print(msufulldata[sample(1:nrow(msufulldata), 15),])
 ```
 
-This sample demonstrates that there are comments/threads that were scraped that are irrelevant to our topic/analysis and should be removed from the corpus.  We can subset the data by limiting comments to those that include specified phases in the post title and/or body.  
-
-We begin with limiting to any posts that contain the phrases "Michigan State University", "MSU", "MSU Shooting", "Michigan State", and "Spartan".
+This sample demonstrates that there are comments/threads that were scraped that are irrelevant to our topic/analysis and should be removed from the corpus. We can subset the data by limiting comments to those that include specified phases in the post title and/or body. We begin with limiting to any posts that contain the phrases “Michigan State University”, “MSU”, “MSU Shooting”, “Michigan State”, and “Spartan”.
 
 ```{r}
 patterns = 'Michigan State University|MSU|MSU Shooting|Michigan State|Spartan'
@@ -121,17 +124,21 @@ subset_msu = msufulldata[grepl(patterns, msufulldata$title, ignore.case=TRUE) |
                                          grepl(patterns, msufulldata$text, ignore.case=TRUE),]
 subsetdim<-dim(subset_msu)
 subsetdim
-head(subset_msu)
+#head(subset_msu)
 #View(subset_msu)
 ```
 
 Using this criteria to subset the scraped Reddit corpus reduces our observations from `r originaldim[1]` to `r subsetdim[1]`.
 
-Given the notable reduction in the sample (reduced by approximately half) a quick manual review was conducted to ensure there were not commonly used phases that should be added to the inclusion criteria.  No additional phrases were identified that would notably improve coverage of the topic in the corpus.
+Given the notable reduction in the sample (reduced by approximately half) a manual review was conducted to ensure there were not commonly used phases that should be added to the inclusion criteria. The reviewer (SM) looked for phrases that may have been missed for inclusion or unexpected items that would be included but should not be.  The term “Michigan” was inspected closely but was ultimately determined that meaningful inclusions with the term Michigan were already caught by the other specified key words.
 
-### Frequent Terms
+No additional phrases were identified that would notably improve coverage of the topic in the corpus.
 
-To continue the exploratory analysis of the dataset, we used the qdap package to identify the most frequently used phrases in our updated (subsetted) corpus.
+### Exploratory Analysis
+
+#### Frequent Terms
+
+Given the importance of term inclusion for this analysis, it is important that we explore and begin to understand the phrases most often occurring in the corpus.  To that end, we used the qdap package to identify the most frequently used phrases in our updated (subsetted) corpus.
 
 ```{r, warning=FALSE, message=FALSE}
 # Workaround needed to prevent RStudio from crashing
@@ -165,11 +172,10 @@ frequent_terms = freq_terms(subset_msu$title_text, 30)
 plot(frequent_terms)
 ```
 
-As shown in the plot above, many of the frequent words are "stop words" that are not relevant to understanding the content of the post.  We do, however, see the expected and very relevant words "shooting" and "msu".
-
+As shown in the plot above, many of the frequent words are “stop words” that are not relevant to understanding the content of the post. We do, however, see the expected and very relevant words “shooting” and “msu”.
 To make the review of frequent words more meaningful, we filter out the stop words and re-compute the most frequently used words in the corpus.
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 msustopwords = subset_msu$title_text %>% iconv ("latin1", "ASCII", sub ="") %>% scrubber () %sw%
 qdapDictionaries :: Top200Words
 
@@ -177,9 +183,9 @@ frequent_terms = freq_terms(msustopwords, 30)
 plot(frequent_terms)
 ```
 
-Without stop words, additional themes begin to emerge such as "gun" and "game".  These two words indicate that there may be multiple popular topics about Michigan State University being discussed concurrently on Reddit.  There remain words that may be non-informative, such as www, govmailto, b, x, etc.  However, these together may indicate a trend in the posts urging readers to reach out to government representatives - which is an important aspect of the ongoing trend during the listening period.
+Without stop words, additional themes begin to emerge such as “gun” and “game”. These two words indicate that there may be multiple popular topics about Michigan State University being discussed concurrently on Reddit. There remain words that may be non-informative, such as www, govmailto, b, x, etc. However, these together may indicate a trend in the posts urging readers to reach out to government representatives - which is an important aspect of the ongoing trend during the listening period.
 
-### Exploratory Analysis
+#### Frequency and Location of Posts and Comments
 
 Before doing formal statistical analyses on the scraped and subsetted data, we may like to know more about where it came from specifically within the Reddit site.
 
@@ -193,7 +199,7 @@ subfreqordered <- subredditfreq %>% as.data.frame() %>% arrange(desc(Freq))
 subfreqordered[1:10,]
 ```
 
-The top 10 subreddits that contained posts within our corpus as shown above (including "masskillers", "gunpolitics", and "GunsAreCool") support the prevalence of the MSU shooting within the scraped data.
+The top 10 subreddits that contained posts within our corpus as shown above (including “masskillers”, “gunpolitics”, and “GunsAreCool”) support the prevalence of the MSU shooting within the scraped data.
 
 We can also review when the posts within our corpus were added to Reddit.
 
@@ -203,9 +209,10 @@ ggplot(subset_msu, aes(x=datetime)) +
   geom_histogram() +
   xlab('Date') + ylab('Count') + ggtitle('Frequency of MSU Shooting Posts within the last month')
 ```
-The shooting at Michigan State University occurred on Monday, February 13.  The plot of posts shows the highest frequency of selected posts beginning that day and within the 3 days that followed.
+The shooting at Michigan State University occurred on Monday, February 13. The plot of posts shows the highest frequency of selected posts beginning that day and within the 3 days that followed.
 
 Reddit allows for users to comment on posts, which may provide insights into the overall engagement with posts related to the MSU Shooting.  
+
 
 ```{r}
 comsum<-summary(subset_msu$comments)
@@ -215,13 +222,16 @@ The median number of comments on the posts within the corpus is `r comsum[3]` wh
 
 ### Sentiment Analysis
 
-Sentiment analysis allows us to review the overall positive or negative tone of posts within our corpus using 5 different dictionaries:
+For this analysis, we use 4 dictionary-based methods – specifically we used the following dictionaries to analyzed the sentiment of posts:
 
-* GI: Harvard-IV General Inquirer dictionary
-* HE: Henry's finance specific dictionary
-* LM: Loughran-McDonald financial dictionary
-* QDAP
-* Lexicoder
+* GI: Harvard-IV General Inquirer dictionary – a widely used dictionary in sentiment analysis that contain approximately 4,500 positively and negatively classified words along with categories for certainty, activity, and pleasantness
+* HE: Henry’s finance specific dictionary – a dictionary tailored toward the financial domain containing approximately 2,400 words
+* LM: Loughran-McDonald financial dictionary – another dictionary tailored toward the financial domain that includes broader categories than HE including uncertainty, litigiousness, and modalities
+* QDAP – a combination of NLP techniques and machine learning algorithms that categorizes words into 6 categories: positive, negative, anger, fear, sadness, and surprise
+* Lexicoder – a dictionary designed for political communication and social media data with categories such as positive, negative, neutral, power, risk, and morality
+ 
+We would anticipate that HE and LM (the financially-focused dictionaries) may not be as relevant to our analysis, but include them for comprehensiveness.
+
 
 ```{r, message=FALSE}
 library(SentimentAnalysis)
@@ -240,6 +250,9 @@ sentiments = analyzeSentiment(iconv(as.character(subset_msu$title_text), to='UTF
 head(sentiments)
 ```
 
+For each dictionary method, we have the number of non-stop words in the title and post, a measure of negative words within the observation (NegativityXX), a measure of positive words within the observation (PositivityXX), and a measure of the overall sentiment (SentimentXX).
+
+Within the first six observations we see variation within the different posts and within the ratings of the different methods.  We can explore these differences by looking at the correlation between the different methods.
 
 ```{r}
 tokenized = tokens_lookup(tokens(subset_msu$title_text), dictionary = data_dictionary_LSD2015, exclusive=FALSE)
@@ -247,8 +260,6 @@ sentiments$LCpos = sapply(tokenized, function(x)sum(x=='POSITIVE')-sum(x=='NEG_P
 sentiments$LCneg = sapply(tokenized, function(x)sum(x=='NEGATIVE')-sum(x=='NEG_NEGATIVE') + sum(x=='NEG_POSITIVE'))
 sentiments$LC = (sentiments$LCpos - sentiments$LCneg)/sentiments$WordCount
 ```
-
-
 
 ```{r, cache=TRUE}
 library(vader)
@@ -262,6 +273,15 @@ with(sentiments,
      ggpairs(data.frame(SentimentGI, SentimentHE, SentimentLM, SentimentQDAP, LC, Vader)))
 ```
 
+As expected, we notice smaller correlations between the financially-focused dictionaries with the other methods.  The QDAP, Lexicoder, and Vader (rule-based method) are the more highly correlated methods.  Again, this is not a surprising finding given that these methods are most aligned with the kind of data we are analyzing (social media data).  This does bring out an interesting point for sentiment analysis though – the alignment between dictionary and analysis is an important consideration for accuracy and confidence with the resulting findings.
+
+When comparing Vader to other sentiment analysis tools using  the generalized pairs plot we note that vader is significantly correlated to dictionary methods such as General Inquirer (0.5644)  and  Lexicoder (0.639). 
+
+
+#### Rule-Based Method
+Our rule-based method uses the Vader (Valence Aware Dictionary and sEntiment Reasoner) package in R.  Vader is a sentiment lexicon with over 9,000 features ranked by people, not machine learning models, on a scale from -4 to +4 from most negative to most positive.  The average of the ratings were collected, neutral words removed, and a dictionary was generated with over 7,000 elements.  Additional rules are implemented in addition to the collected dictionary phrases that accounts for negations (e.g, the “not” in “not great”) which changes the classification of the sentiment.  Because these rules add nuance, we would expect this rule-based method to be the most accurate of the 5 implemented within this analysis.
+ 
+Through the implementation of the Vader package, we see a wide spread of sentiments within the posts scraped from Reddit.
 
 ```{r}
 all_subset_msu_data = cbind(subset_msu, sentiments)
@@ -269,26 +289,46 @@ ggplot(all_subset_msu_data, aes(x=as.Date(date_utc), y=Vader)) +
   geom_point() + geom_smooth()
 ```
 
+The plot above of the trend in sentiment over time using a loess smoothing function appears to be generally flat at 0.  This does *not* mean that the posts on the subject were neutral – in fact, the opposite is true.  There were, and continue to be, posts on the extremes of sentiment range.  Because of this generally uniform distribution of sentiment we have to be careful in interpreting the trends to avoid masking important findings through averaging, etc.
+To begin quantifying this variance, we can look at whether posts in different subreddits have different overall sentiment.
 
-Difference in sentiment between MSU subreddit and GunsAreCool subreddit
+The posts in our corpus are within the following subreddits:
+
 ```{r}
 table(all_subset_msu_data$subreddit)
 
+```
+
+##### Comparison of Sentiment Across Subreddits
+Given the noted trend of varying sentiments between Reddit posts about the MSU Shooting, we selected 2 subreddits to compare, specifically the “msu” and the “GunsAreCool” subreddits.
+
+```{r}
 par(mfrow=c(1,2))
 hist(all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='msu'], main='msu', xlab='Vader')
 hist(all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='GunsAreCool'], main='GunsAreCool', xlab='Vader')
 
+```
+
+As evident in the histograms above, posts on the msu subreddit have a wider variance, but trend more toward positive sentiment, whereas posts in the GunsAreCool subreddit are primarily negative sentiment.  This aligns with intuition about the subject of the posts and potential users expected to be contributing to those subreddits.
+We verify this result formally with a t-test of the sentiments of the posts within each subreddt.
+
+```{r}
 t.test(all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='msu'],
        all_subset_msu_data$Vader[all_subset_msu_data$subreddit=='GunsAreCool'])
 ```
 
+We find convincing evidence (p < 0.003) that the sentiments between these 2 subreddits are significantly different.
 
 ### 3 Additional Questions about the Corpus
 
 1) Does post length correlate with vader sentiment scores?
 ```{r}
-cor(sentiments$WordCount,sentiments$Vader)
+corone<-cor(sentiments$WordCount,sentiments$Vader)
+corone
 ```
+
+ANSWER: There is moderate correlation between the length of the Vader sentiments score and the length of the post title and body (`r corone`)
+
 
 
 2) Does the sentiment of a post correlate with the number of comments it will receive?  Does the intensity (regardless if positive or negative sentiment) correlate with the number of comments a post will receive?
@@ -298,18 +338,25 @@ cor(sentiments$WordCount,sentiments$Vader)
 
 ```{r}
 #correlation between vader score and number of comments
-cor(all_subset_msu_data$Vader,all_subset_msu_data$comments)
+cortwo<-cor(all_subset_msu_data$Vader,all_subset_msu_data$comments)
+cortwo
 
 #create new variable which is absolute value of vader score to indicate the intensity of the vader score regardless if positive or negative - will use to see whether the more positive or negative a post is will correlate with number of comments
 all_subset_msu_data$VaderIntesity<-abs(all_subset_msu_data$Vader)
 #head(all_subset_msu_data)
 
 #correlation between vader score intensity and number of comments
-cor(all_subset_msu_data$VaderIntesity,all_subset_msu_data$comments)
+corthree<-cor(all_subset_msu_data$VaderIntesity,all_subset_msu_data$comments)
+corthree
 
 ```
 
+ANSWER: There is weak correlation (`r cortwo`) between the Vader sentiment and number of comments.  When expanded further to consider just the intensity of the sentiment score (i.e., how strong the sentiment was regardless of whether positive or negative) the correlation is weaker (`r corthree`).  This seems to indicate that despite relatively weak correlation the direction of the sentiment does contribute to the effect.
+
+
 3) Is there a difference between the number of comments on positive or negative sentiment thread (as a proxy for engagement)?
+
+Including all posts:
 
 ```{r}
 library(sjmisc)
@@ -327,6 +374,10 @@ t.test(all_subset_msu_data$comments[all_subset_msu_data$Vaderposneg=='0'],
 
 ```
 
+ANSWER: No, there is not a significant difference between the number of comments on posts with positive sentiment compared to those with negative sentiment.
+
+We expanded further to exclude posts with fewer than 100 comments to remove posts that may not have been viewed often or that overall lacked engagement.  The same analysis was conducted to determine if positive posts received the same number of comments.
+
 ```{r}
 
 # Considering only observations that had at least 100 comment
@@ -343,3 +394,5 @@ hist(subset_msu_withcomments$comments[subset_msu_withcomments$Vaderposneg=='1'],
 t.test(subset_msu_withcomments$comments[subset_msu_withcomments$Vaderposneg=='0'],
       subset_msu_withcomments$comments[subset_msu_withcomments$Vaderposneg=='1'])
 ```
+
+ANSWER: Even when removing posts that were not highly engaged with, the number of comments was not significantly different between posts with positive sentiments as compared with negative sentiment posts.
