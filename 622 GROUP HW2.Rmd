@@ -97,7 +97,7 @@ msufulldata <- read.csv('https://raw.githubusercontent.com/jessicavalenciaal/The
 originaldim<-dim(msufulldata)
 originaldim
 #View(msufulldata)
-head(msufulldata)
+#head(msufulldata)
 ```
 
 ### Cleaning the Dataset
