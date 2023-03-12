@@ -32,7 +32,7 @@ For this assignment we decided to look at Michigan State University(MSU) as our 
 We used the built-in find_thread_urls feature with the keyword "MSU shooting" to locate the URLs to Reddit threads of interest (in other words, threads that contained the string "MSU shooting"). Data was colled from the "front page" of Reddit, rather than any specific subreddit in this first step.
 
 ```{r find_thread_url_msu}
-#msu_urls = find_thread_urls(keywords='MSU Shooting', period='month')
+#msu_urls = find_thread_urls(keywords='MSU Shooting', period='day')
 #dim(msu_urls)
 #head(msu_urls)
 ```
