@@ -3,6 +3,7 @@ title: "622 HW2 GROUP"
 author: "Ruiling Kang, Sihle Khanyile, Suzy McTaggart, Jessica Valencia"
 date: "2023-03-04"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -384,8 +385,8 @@ We expanded further to exclude posts with fewer than 100 comments to remove post
 
 subset_msu_withcomments<- all_subset_msu_data[which(all_subset_msu_data$comments > 100), ]
 
-dim(subset_msu_withcomments)
-head(subset_msu_withcomments)
+#dim(subset_msu_withcomments)
+#head(subset_msu_withcomments)
 
 par(mfrow=c(1,2))
 hist(subset_msu_withcomments$comments[subset_msu_withcomments$Vaderposneg=='0'], main='Negative Sentiment', xlab='Number of Comments')
