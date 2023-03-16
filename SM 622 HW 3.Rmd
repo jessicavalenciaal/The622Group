@@ -1,0 +1,41 @@
+---
+title: "622 HW 3"
+author: "Suzy McTaggart, Jessica Valencia, Sihle Khanyile, Ruiling Kang"
+date: "2023-03-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment 3: Machine Learning with Reddit Posts
+
+In this assignment, we will apply machine learning techniques to interpret the Reddit posts scraped about Michigan State University and the MSU Shooting as described in our Assignment 2 report.
+
+
+## Part 1: Hand-coding the posts to create a dataset
+
+We use the cleaned corpus of Reddit posts to select a subset of 200 posts.
+
+```{r}
+library(readr)
+#where you will bring in the data
+hw3data <- read.csv('https://raw.githubusercontent.com/jessicavalenciaal/The622Group/main/hw3data.csv',sep=',')
+#head(hw3data)
+```
+
+```{r}
+# remove NA lines
+
+#hw3subset<-hw3data[sample(1:nrow(hw3data), 200),]
+#head(hw3subset)
+
+#write.csv(hw3subset, "C:\\Users\\sweeneys\\OneDrive - Michigan Medicine\\Desktop\\622\\hw3datasubset.csv", row.names=TRUE)
+```
+
+```{r}
+#hw3data_subset <- read.csv('placeholder for github link',sep=',')
+#head(hw3data_subset)
+```
+
